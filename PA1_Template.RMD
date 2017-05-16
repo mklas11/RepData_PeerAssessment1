@@ -1,0 +1,91 @@
+Reproducible Research Project 1
+===============================
+
+First step is to load dataset and remove NA values
+```{r}
+Fitdata <- na.omit(read.csv("123.csv", header = TRUE))
+```
+
+
+Question 1 - What is the mean steps taken per day?
+
+
+Calc the number of steps taken per day and display in a histogram
+```{r}
+datastepspd <- aggregate(steps~date, Fitdata, sum)
+hist(datastepspd$steps, xlab = "Steps per Day", ylab = "# Days", main = "Steps per Day Histogram", col = 72)
+```
+
+What are the mean and median steps taken per day?
+```{r}
+meanstepsperday <-mean(datastepspd$steps)
+medianstepsperday <- median(datastepspd$steps)
+meanstepsperday
+medianstepsperday
+```
+
+
+Question 2 - What is the average daily activity patern?
+
+
+Make a time series plot of 5minute interval and average number of steps taken averaged across all days
+```{r}
+datastepspint <- aggregate(steps~interval, Fitdata, sum)
+stepsperintplot <- plot(datastepspint$interval, datastepspint$steps, xlab = "Interval", ylab = "# Steps", main = "Avg Steps Over Intervals", pch=1,col=580)
+axis(1, at = seq(0,2400, by=100), las=3)
+```
+
+Which 5 minute interval on average contains the most steps?
+```{r}
+moststeps <- datastepspint[which(datastepspint$steps == max(datastepspint$steps)),]
+moststeps
+```
+
+
+Question 3 - Imputing missing values
+
+
+Calculate and report the total number of missing values in the dataset - for this will have to reload the data and the calc the number of NAs
+```{r}
+fitdatana <- read.csv("123.csv", header = TRUE)
+nasindata <-sum(is.na(fitdatana))
+nasindata
+```
+
+Create new data set equal to original one with blanks filled in and determine method to replace the NAs.  For this will simply replace NAs with the mean of dataset
+```{r}
+fitdatana1 <- fitdatana
+fitdatana1$steps[which(is.na(fitdatana1$steps))] <- mean(fitdatana1$steps, na.rm = TRUE)
+```
+
+Make histogram of total steps per day and calc mean and median total steps per day
+```{r}
+datastepspd1 <- aggregate(steps~date, fitdatana1, sum)
+hist(datastepspd1$steps, xlab = "Steps per Day", ylab = "# Days", main = "Steps per Day Histogram", col = 72)
+meanstepsperday1 <- mean(datastepspd1$steps)
+medianstepsperday1 <- median(datastepspd1$steps)
+meanstepsperday1
+medianstepsperday1
+```
+Values dont seem to differ from the caluclations without NAs.  This is mainly caused by the method of replacement - the NAs were replaced with the mean of all records.  A different method would yield other results.
+
+
+Question 4 - Are there differnces in activity patterns between weekdays and weekends
+
+
+Create new factor variable in dataset indicating weekday or weekend
+```{r}
+fitdatana2 <- fitdatana1
+fitdatana2$date <- as.Date(fitdatana2$date)
+fitdatana2$dow <-as.Date(fitdatana2$date)
+weekdays1 <- c('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday')
+fitdatana2$dow <- factor((weekdays(fitdatana2$date) %in% weekdays1), 
+                   levels=c(FALSE, TRUE), labels=c('weekday', 'weekend'))
+```
+
+Create panel plot of time series of 5 minute intervals on x axis and average number of steps taken on y axis.  
+```{r}
+library(lattice)
+xyplot(fitdatana2$steps ~ fitdatana2$interval|fitdatana2$dow, main="Average Steps per Day by Interval",xlab="Interval", ylab="Steps",layout=c(1,2), type="l")
+```
+
